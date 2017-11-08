@@ -19,41 +19,71 @@ class Board:
         self.parent = parent
 
     def set_board(self,board):
-        self.board = board
+        self.board = dc(board)
 
     # checks if given list has empty room
     def has_empty(self,lst):
         return emptyspot in lst
 
     # merge in the given direction if possible
-    def merge(self,b=None,d):
+    def merge(self,d,b=None):
         # preprocess the lists so they can be iterated over in a single for loop
         # reverse cols for processing if u can move in that way
         if d == 'u':
-            b = reverse_matrix_rows(self.get_cols(b))
+            # reverse the cols
+            b = self.reverse_matrix_rows(self.get_cols(b))
+            # merge
+            b = self.merge_helper(b)
+            # reverse it back
+            b = self.reverse_matrix_rows(b)
+            # get its cols
+            b = self.get_cols(b)
         if d == 'l':
-            b = reverse_matrix_rows(self.board)
+            # reverse the rows
+            b = self.reverse_matrix_rows(self.board)
+            # merge
+            b = self.merge_helper(b)
+            # reverse it back
+            b = self.reverse_matrix_rows(b)
         if d == 'd':
+            b = self.get_cols(b)
+            # merge 
+            b = self.merge_helper(b)
+            # get its cols
             b = self.get_cols(b)
         if d == 'r':
             b = self.board
-        mergable = False
+            # merge
+            b = self.merge_helper(b)
+        # set main board
+        self.set_board(b)
+        return b
+
+    def merge_helper(self,b):
         r = 0
         # go through the tiles rows and check for combos
-        while tcount < self.width-1:
-            m = can_merge(b[r])
-            if can_merge(b)[1]:
+        while r < self.width-1:
+            m = self.can_merge(b[r])
+            if m[1]:
+                for l in m[0]:
+                    b[r][l] *= 2
+                    b[r][l-1] = 0
+            r+=1
+        return b
 
     # checks if a list has tiles that are mergable and returns mergable spots
     def can_merge(self,l):
         c = 0
         mergables = []
         mergable = False
-        while c < len(l):
+        k = len(l)
+        while c < k:
             if l[c] == l[c+1]:
-                mergables.append(c)
+                mergables.append(c+1)
                 mergable = True
-            c+=2
+                c+=1
+                k-=1
+            c+=1
         return (mergables,mergable)
             
     def reverse_matrix_rows(self,b):
@@ -183,3 +213,23 @@ class Board:
     def opposite_player(self,p=None):
         p = self.turn if p == None else p
         return self.minplayer if p == self.maxplayer else self.maxplayer
+
+def p(s):
+    print(str(np.matrix(s)))
+
+def t(k,d):
+    i = Board()
+    i.set_board(k)
+    print('i')
+    p(i.board)
+    i.merge(d)
+    print('after',d)
+    p(i.board)
+    print()
+
+td = [[2,0,0,0],[2,2,0,2],[0,2,2,0],[0,0,2,2]]
+lr = [[2,2,0,0],[0,2,2,0],[0,0,2,2],[0,2,0,2]]
+t(td,'u')
+t(lr,'r')
+t(td,'d')
+t(lr,'l')
