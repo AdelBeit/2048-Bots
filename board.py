@@ -25,8 +25,8 @@ class Board:
     def has_empty(self,lst):
         return emptyspot in lst
 
-    # merge in the given direction if possible
-    def merge(self,d,b=None):
+    # merge and move in the given direction if possible
+    def merge_move(self,d,b=None):
         # preprocess the lists so they can be iterated over in a single for loop
         # reverse cols for processing if u can move in that way
         if d == 'u':
@@ -34,6 +34,8 @@ class Board:
             b = self.reverse_matrix_rows(self.get_cols(b))
             # merge
             b = self.merge_helper(b)
+            # move
+            b = self.move(b)
             # reverse it back
             b = self.reverse_matrix_rows(b)
             # get its cols
@@ -43,22 +45,28 @@ class Board:
             b = self.reverse_matrix_rows(self.board)
             # merge
             b = self.merge_helper(b)
+            # move
+            b = self.move(b)
             # reverse it back
             b = self.reverse_matrix_rows(b)
         if d == 'd':
             b = self.get_cols(b)
             # merge 
             b = self.merge_helper(b)
+            # move
+            b = self.move(b)
             # get its cols
             b = self.get_cols(b)
         if d == 'r':
             b = self.board
             # merge
             b = self.merge_helper(b)
+            # move
+            b = self.move(b)
         # set main board
         self.set_board(b)
         return b
-
+    
     def merge_helper(self,b):
         r = 0
         # go through the tiles rows and check for combos
@@ -67,7 +75,7 @@ class Board:
             if m[1]:
                 for l in m[0]:
                     b[r][l] *= 2
-                    b[r][l-1] = 0
+                    b[r][l-1] = self.emptyspot
             r+=1
         return b
 
@@ -85,6 +93,21 @@ class Board:
                 k-=1
             c+=1
         return (mergables,mergable)
+
+    # move the tiles according to direction
+    def move(self,b):
+        r = 0
+        b = self.reverse_matrix_rows(b)
+        while r < len(b):
+            vals = []
+            for i in range(len(b[r])):
+                if b[r][i] != self.emptyspot:
+                    vals.append(b[r][i])
+            vals += [self.emptyspot] * (len(b[r])-len(vals))
+            b[r] = vals
+            r += 1
+        b = self.reverse_matrix_rows(b)
+        return b
             
     def reverse_matrix_rows(self,b):
         b = dc(b)
@@ -222,13 +245,13 @@ def t(k,d):
     i.set_board(k)
     print('i')
     p(i.board)
-    i.merge(d)
+    i.merge_move(d)
     print('after',d)
     p(i.board)
     print()
 
-td = [[2,0,0,0],[2,2,0,2],[0,2,2,0],[0,0,2,2]]
-lr = [[2,2,0,0],[0,2,2,0],[0,0,2,2],[0,2,0,2]]
+td = [[2,0,8,0],[2,2,4,2],[0,2,2,0],[0,8,2,2]]
+lr = [[2,2,0,0],[0,2,2,0],[8,0,2,2],[0,2,8,2]]
 t(td,'u')
 t(lr,'r')
 t(td,'d')
