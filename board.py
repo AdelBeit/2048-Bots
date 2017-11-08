@@ -3,7 +3,7 @@
 import numpy as np
 from copy import deepcopy as dc
 class Board:
-    emptyspot = 3510
+    emptyspot = 0
     width = 4
     height = 4
     maxplayer = "Mover"
@@ -21,6 +21,47 @@ class Board:
     def set_board(self,board):
         self.board = board
 
+    # checks if given list has empty room
+    def has_empty(self,lst):
+        return emptyspot in lst
+
+    # merge in the given direction if possible
+    def merge(self,b=None,d):
+        # preprocess the lists so they can be iterated over in a single for loop
+        # reverse cols for processing if u can move in that way
+        if d == 'u':
+            b = reverse_matrix_rows(self.get_cols(b))
+        if d == 'l':
+            b = reverse_matrix_rows(self.board)
+        if d == 'd':
+            b = self.get_cols(b)
+        if d == 'r':
+            b = self.board
+        mergable = False
+        r = 0
+        # go through the tiles rows and check for combos
+        while tcount < self.width-1:
+            m = can_merge(b[r])
+            if can_merge(b)[1]:
+
+    # checks if a list has tiles that are mergable and returns mergable spots
+    def can_merge(self,l):
+        c = 0
+        mergables = []
+        mergable = False
+        while c < len(l):
+            if l[c] == l[c+1]:
+                mergables.append(c)
+                mergable = True
+            c+=2
+        return (mergables,mergable)
+            
+    def reverse_matrix_rows(self,b):
+        b = dc(b)
+        for i in range(len(b)):
+            b[i] = b[i][::-1]
+        return b
+    
     def get_cols(self,b):
         if b == None:
             b = self.board
@@ -34,7 +75,7 @@ class Board:
         return self.get_cols(b)[0]
 
     def get_right_col(self,b=None):
-        return self.get_cols(b)[width-1]
+        return self.get_cols(b)[self.width-1]
 
     def get_top_row(self,b=None):
         if b==None:
@@ -58,7 +99,8 @@ class Board:
         while counter < 4:
             for l in options[counter]:
                 if self.emptyspot in l:
-                    return 
+                    moves.append(counter)
+            counter += 1
         
         moves = []
         for col in range(self.width):
@@ -117,19 +159,6 @@ class Board:
         
         return False
     
-    # checks if a list has 4 items of the same type in a row
-    def same4(self,d,p):
-        for row in d:
-            s = 0
-            for x in row:
-                if x == p:
-                    s += 1
-                    if s == 4:
-                        return True
-                else:
-                    s == 0
-        return False
-
     # prs board and ends game
     def game_over(self):
         p = self.opposite_player()
