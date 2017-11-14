@@ -1,5 +1,7 @@
 from copy import deepcopy 
 import random
+import aihelper
+import aiantagonist
 
 class Board():
         
@@ -8,7 +10,8 @@ class Board():
                       [0, 0, 0, 0],
                       [0, 0, 0, 0],
                       [0, 0, 0, 0]]
-        self.movesMade = list()
+        self.shifts_made = list()
+        self.tiles_placed = list()
         self.shifters_turn = False
         self.previous_board_state = None
         
@@ -125,9 +128,18 @@ class Board():
             moves.append((tuple2, None))
         else:
             moves.append((None, None))
-            print("No available spaces to place new tiles: if there are no available shifts: gameover")
+            print("No available spaces to place new tiles: if there are no available shifts then gameover")
         return moves
             
+    def previewMove(self, move):
+        copy_of_self = deepcopy(self)
+        
+        if(copy_of_self.shifters_turn): #shift tiles
+            copy_of_self.makeMoves_ShiftTiles(move)
+        else: #place tiles
+            copy_of_self.makeMoves_PlaceTiles(move)
+        copy_of_self.shifters_turn = not(copy_of_self.shifters_turn)
+        return copy_of_self
     
     def makeMoves(self, move):
         if(self.shifters_turn): #shift tiles
@@ -137,23 +149,23 @@ class Board():
         self.shifters_turn = not(self.shifters_turn)
     
     def makeMoves_ShiftTiles(self, direction):
+        
+        self.previous_board_state = deepcopy(self.board)
+        self.shifts_made.append(direction)
+        
         if(direction == "up"):
-            self.previous_board_state = deepcopy(self.board)
             self.board = self.shift_up()
         elif(direction == "down"):
-            self.previous_board_state = deepcopy(self.board)
             self.board = self.shift_down()
         elif(direction == "left"):
-            self.previous_board_state = deepcopy(self.board)
             self.board = self.shift_left()
         elif(direction == "right"):
-            self.previous_board_state = deepcopy(self.board)
             self.board = self.shift_right() 
         else:
             print("error, wrong argument: %s" % direction)
     
     def shift_up(self):
-        print("SHIFTING UP")
+        #print("SHIFTING UP")
         board = deepcopy(self.board)
         zero_spaces = list()
         #shift and merge up
@@ -168,12 +180,12 @@ class Board():
                     zero_spaces.append(y)
                     if(top_most_open > 0):
                         if(board[top_most_open][x] == board[top_most_open - 1][x]):
-                            print("merging at column %d" % x)
+                            #print("merging at column %d" % x)
                             board[top_most_open - 1][x] = board[top_most_open - 1][x]*2
                             board[top_most_open][x] = 0
                             zero_spaces.insert(0, top_most_open)
                 elif(y > 0 and board[y-1][x] == board[y][x]):
-                    print("merging at column %d" % x)
+                    #print("merging at column %d" % x)
                     board[y-1][x] = board[y-1][x]*2
                     board[y][x] = 0
                     zero_spaces.insert(0, y)
@@ -181,7 +193,7 @@ class Board():
         return board
     
     def shift_down(self):
-        print("SHIFTING DOWN")
+        #print("SHIFTING DOWN")
         board = deepcopy(self.board)
         zero_spaces = list()
         #shift and merge down
@@ -196,12 +208,12 @@ class Board():
                     zero_spaces.append(y)
                     if(bottom_most_open < 3):
                         if(board[bottom_most_open][x] == board[bottom_most_open + 1][x]):
-                            print("merging at column %d" % x)
+                            #print("merging at column %d" % x)
                             board[bottom_most_open + 1][x] = board[bottom_most_open + 1][x]*2
                             board[bottom_most_open][x] = 0
                             zero_spaces.insert(0, bottom_most_open)
                 elif(y < 3 and board[y + 1][x] == board[y][x]):
-                    print("merging at column %d" % x)
+                    #print("merging at column %d" % x)
                     board[y + 1][x] = board[y + 1][x]*2
                     board[y][x] = 0
                     zero_spaces.insert(0, y)
@@ -209,7 +221,7 @@ class Board():
         return board
     
     def shift_left(self):
-        print("SHIFTING LEFT")
+        #print("SHIFTING LEFT")
         board = deepcopy(self.board)
         zero_spaces = list()
         #shift and merge left
@@ -224,12 +236,12 @@ class Board():
                     zero_spaces.append(y)
                     if(left_most_open > 0):
                         if(board[x][left_most_open - 1] == board[x][left_most_open]):
-                            print("merging at row %d" % x)
+                            #print("merging at row %d" % x)
                             board[x][left_most_open - 1] = board[x][left_most_open - 1]*2
                             board[x][left_most_open] = 0
                             zero_spaces.insert(0, left_most_open)
                 elif(y > 0 and board[x][y - 1] == board[x][y]):
-                    print("merging at row %d" % x)
+                    #print("merging at row %d" % x)
                     board[x][y - 1] = board[x][y - 1]*2
                     board[x][y] = 0
                     zero_spaces.insert(0, y)
@@ -237,7 +249,7 @@ class Board():
         return board
     
     def shift_right(self):
-        print("SHIFT RIGHT")
+        #print("SHIFT RIGHT")
         board = deepcopy(self.board)
         zero_spaces = list()
         #shift and merge right
@@ -252,12 +264,12 @@ class Board():
                     zero_spaces.append(y)
                     if(right_most_open < 3):
                         if(board[x][right_most_open + 1] == board[x][right_most_open]):
-                            print("merging at row %d" % x)
+                            #print("merging at row %d" % x)
                             board[x][right_most_open + 1] = board[x][right_most_open + 1]*2
                             board[x][right_most_open] = 0
                             zero_spaces.insert(0, right_most_open)
                 elif(y < 3 and board[x][y + 1] == board[x][y]):
-                    print("merging at row %d" % x)
+                    #print("merging at row %d" % x)
                     board[x][y + 1] = board[x][y + 1]*2
                     board[x][y] = 0
                     zero_spaces.insert(0, y)
@@ -267,7 +279,12 @@ class Board():
     # move is a tuple of tiles where a tile is represented as a set of coordinates and a value
     # move = (((x1, y1), val), ((x2, y2), val))
     def makeMoves_PlaceTiles(self, move):
+        
+        self.previous_board_state = deepcopy(self.board)
+        self.tiles_placed.append(move)
+        
         if(move[0] == None): # No open spaces, skip turn
+            print("skipping turn")
             return self.board
         elif(move[1] == None): #only 1 open space
             tuple1 = move[0]
@@ -305,10 +322,7 @@ class Board():
     
     #checks if there are no available shifts to make
     def opponentWon(self):
-        if(self.previous_board_state != None):
-            return not self.generateMoves_ShiftTiles()
-        else:
-            return False
+            return (self.previous_board_state != None) and (not self.generateMoves_ShiftTiles())
     
     def aiWon(self):
         for x in range(4):
@@ -319,13 +333,21 @@ class Board():
     
 def main():
     b1 = Board()
+    ai_good = aihelper.AIHelper(b1)
+    ai_bad = aiantagonist.Antagonist(b1)
+    iterations = 0
     while(not b1.gameOver()):
-        print(b1.shifters_turn)
         moves = b1.generateMoves()
+        print(iterations)
         if(b1.shifters_turn):
-            print(moves)
-        b1.makeMoves(random.choice(moves))
+            bestMove = ai_good.alpha_beta(b1, 1)
+            b1.makeMoves(bestMove)
+        else:
+            bestMove = ai_bad.alpha_beta(b1, 1)
+            b1.makeMoves(bestMove)
+            #b1.makeMoves(random.choice(moves))
         print(b1)
+        iterations += 1
 
 if __name__=="__main__":
     main()
