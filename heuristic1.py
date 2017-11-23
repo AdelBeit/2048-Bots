@@ -2,6 +2,7 @@
 #import search
 import numpy as np
 from copy import deepcopy as dc
+import math
 
 def heuristic1(board):
     score = 0
