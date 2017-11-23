@@ -1,7 +1,7 @@
 from copy import deepcopy 
 import random
-import aihelper
-import aiantagonist
+import ai_helper as aihelper
+import ai_opponent as aiantagonist
 
 class Board():
         

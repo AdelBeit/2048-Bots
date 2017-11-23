@@ -1,3 +1,5 @@
+import heuristic1 as h1
+
 class AIHelper:
     
     def __init__(self, b):
@@ -54,6 +56,6 @@ class AIHelper:
     
     def evaluation(self, b):
         board = b.board
-        total = 0
+        total = h1.heuristic1(board)[0]
         return total
         
