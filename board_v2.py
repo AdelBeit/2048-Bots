@@ -87,50 +87,14 @@ class Board():
         return moves
         
     def generateMoves_PlaceTiles(self):
-        openSpaces = list()
+        moves = list()
         for x in range(len(self.board)):
             for y in range(len(self.board[x])):
                 if(self.board[x][y] == 0):
-                    openSpaces.append((x, y))
-        #append all possible combinations of 2 selected tiles and values to moves
-        moves = list()
-        if(len(openSpaces) > 1): #more than 1 spot is open on the board
-            seen = list()
-            copy = openSpaces.copy()
-            for x in openSpaces:
-                for y in copy:
-                    if(y != x and y not in seen):
-                        tuple1 = (x, 2)
-                        tuple2 = (y, 2)
-                        combined = (tuple1, tuple2)
-                        moves.append(combined)
-                        
-                        tuple1 = (x, 2)
-                        tuple2 = (y, 4)
-                        combined = (tuple1, tuple2)
-                        moves.append(combined)
-                        
-                        tuple1 = (x, 4)
-                        tuple2 = (y, 2)
-                        combined = (tuple1, tuple2)
-                        moves.append(combined)
-                        
-                        tuple1 = (x, 4)
-                        tuple2 = (y, 4)
-                        combined = (tuple1, tuple2)
-                        moves.append(combined) 
-                seen.append(x)
-                
-        elif(len(openSpaces) == 1): #1 spot is open on the board
-            tuple1 = (openSpaces[0], 2)
-            tuple2 = (openSpaces[0], 4)
-            moves.append((tuple1, None))
-            moves.append((tuple2, None))
-        else:
-            moves.append((None, None))
-            print("No available spaces to place new tiles: if there are no available shifts then gameover")
+                    moves.append(((x, y), 2))
+                    moves.append(((x, y), 4))
         return moves
-            
+
     def previewMove(self, move):
         copy_of_self = deepcopy(self)
         
@@ -276,39 +240,21 @@ class Board():
             zero_spaces.clear()
         return board
     
-    # move is a tuple of tiles where a tile is represented as a set of coordinates and a value
-    # move = (((x1, y1), val), ((x2, y2), val))
     def makeMoves_PlaceTiles(self, move):
-        
         self.previous_board_state = deepcopy(self.board)
-        self.tiles_placed.append(move)
         
-        if(move[0] == None): # No open spaces, skip turn
-            print("skipping turn")
-            return self.board
-        elif(move[1] == None): #only 1 open space
-            tuple1 = move[0]
-            coord1_value = tuple1[1]
-            coord1 = tuple1[0]
-            x1 = coord1[0]
-            y1 = coord1[1]
-            self.board[x1][y1] = coord1_value
+        if(not self.tiles_placed): #first move of the game is random and selects 2 tile placements
+            moves = self.generateMoves()
+            move1 = random.choice(moves)
+            moves.remove(move1)
+            move2 = random.choice(moves)
+            self.board[move1[0][0]][move1[0][1]] = move1[1]
+            self.board[move2[0][0]][move2[0][1]] = move2[1]
         else:
-            tuple1 = move[0]
-            coord1_value = tuple1[1]
-            coord1 = tuple1[0]
-            x1 = coord1[0]
-            y1 = coord1[1]
+            self.board[move[0][0]][move[0][1]] = move[1]
             
-            tuple2 = move[1]
-            coord2_value= tuple2[1]
-            coord2 = tuple2[0]
-            x2 = coord2[0]
-            y2 = coord2[1]
-            
-            self.board[x1][y1] = coord1_value
-            self.board[x2][y2] = coord2_value
-        
+        self.tiles_placed.append(move)
+     
     def gameOver(self):
         if(self.aiWon()):
             print("AI BOT WINS")
@@ -345,7 +291,10 @@ def main():
         else:
             #bestMove = ai_bad.alpha_beta(b1, 1)
             #b1.makeMoves(bestMove)
+<<<<<<< HEAD
             #b1.makeMoves(random.choice(moves))
+=======
+>>>>>>> origin/master
             b1.makeMoves(random.choice(moves))
         print(b1)
         iterations += 1
