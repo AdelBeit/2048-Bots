@@ -286,15 +286,11 @@ def main():
         moves = b1.generateMoves()
         print(iterations)
         if(b1.shifters_turn):
-            bestMove = ai_good.alpha_beta(b1, 1)
+            bestMove = ai_good.alpha_beta(b1, 20)
             b1.makeMoves(bestMove)
         else:
             #bestMove = ai_bad.alpha_beta(b1, 1)
             #b1.makeMoves(bestMove)
-<<<<<<< HEAD
-            #b1.makeMoves(random.choice(moves))
-=======
->>>>>>> origin/master
             b1.makeMoves(random.choice(moves))
         print(b1)
         iterations += 1
