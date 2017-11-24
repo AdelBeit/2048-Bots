@@ -241,12 +241,20 @@ class Board():
         return board
     
     def makeMoves_PlaceTiles(self, move):
-        
         self.previous_board_state = deepcopy(self.board)
+        
+        if(not self.tiles_placed): #first move of the game is random and selects 2 tile placements
+            moves = self.generateMoves()
+            move1 = random.choice(moves)
+            moves.remove(move1)
+            move2 = random.choice(moves)
+            self.board[move1[0][0]][move1[0][1]] = move1[1]
+            self.board[move2[0][0]][move2[0][1]] = move2[1]
+        else:
+            self.board[move[0][0]][move[0][1]] = move[1]
+            
         self.tiles_placed.append(move)
-        
-        self.board[move[0][0]][move[0][1]] = move[1]
-        
+     
     def gameOver(self):
         if(self.aiWon()):
             print("AI BOT WINS")
