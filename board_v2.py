@@ -343,9 +343,10 @@ def main():
             bestMove = ai_good.alpha_beta(b1, 1)
             b1.makeMoves(bestMove)
         else:
-            bestMove = ai_bad.alpha_beta(b1, 1)
-            b1.makeMoves(bestMove)
+            #bestMove = ai_bad.alpha_beta(b1, 1)
+            #b1.makeMoves(bestMove)
             #b1.makeMoves(random.choice(moves))
+            b1.makeMoves(random.choice(moves))
         print(b1)
         iterations += 1
 
