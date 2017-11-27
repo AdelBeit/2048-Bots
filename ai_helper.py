@@ -55,10 +55,11 @@ class AIHelper:
             beta = min(beta, bestValue)
         return bestValue
     
-<<<<<<< HEAD
+
     def evaluation_v2(self, b):
         total = h1.heuristic1(b,self.a)
-=======
+		return total
+		
     def evaluation(self, b):
         board = b.board
         total = 0
@@ -104,6 +105,5 @@ class AIHelper:
                         total += mx*.5
 
         total = openSpots_total + rowLikeness_total + columnLikeness_total
->>>>>>> origin/master
         return total
         
