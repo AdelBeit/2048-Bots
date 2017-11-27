@@ -2,9 +2,10 @@ import heuristic1 as h1
 
 class AIHelper:
     
-    def __init__(self, b):
+    def __init__(self, b, a=[0,0,0,0,0,0,0,0,0]):
         self.board = b
         self.name = "2048 Bot"
+        self.a = a
         
     def makeMove(self, move):
         self.board.makeMoves(move)
@@ -25,7 +26,7 @@ class AIHelper:
             if(score > bestValue):
                 bestMove = x
                 bestValue = score
-        print("Best Value %d : Best Move %s" % (bestValue, bestMove))
+        #print("Best Value %d : Best Move %s" % (bestValue, bestMove))
         return bestMove
         
     def max_value_ab(self, b, depth, alpha, beta):
@@ -54,8 +55,7 @@ class AIHelper:
             beta = min(beta, bestValue)
         return bestValue
     
-    def evaluation(self, b):
-        board = b.board
-        total = h1.heuristic1(b)
+    def evaluation_v2(self, b):
+        total = h1.heuristic1(b,self.a)
         return total
         

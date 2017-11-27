@@ -1,7 +1,9 @@
-from copy import deepcopy 
+from copy import deepcopy
+import numpy as np
 import random
 import ai_helper as aihelper
 import ai_opponent as aiantagonist
+import getpermutations as p
 
 class Board():
         
@@ -260,7 +262,7 @@ class Board():
             print("AI BOT WINS")
             return True
         elif(self.opponentWon()):
-            print("OPPONENT WINS")
+            #print("OPPONENT WINS")
             return True
         else:
             return False
@@ -276,15 +278,51 @@ class Board():
                 if(self.board[x][y] == 2048):
                     return True   
         return False
+
+def tester():
+    k = [0,0,0,0,0,0,0,0,0]
+    permutations = p.getpermutations(k)
+    most = []
+    c=1
+    ll = []
+    o1 = [0, 1, 1, 1, 0, 1, 1, 1, 1]
+    o2 = [0, 0, 1, 0, 0, 1, 1, 0, 0]
+    o3 = [0, 1, 0, 0, 0, 1, 0, 0, 0]
+    #for i in permutations:
+    for i in range(100):
+        b1 = Board()
+        ai_good = aihelper.AIHelper(b1,o1)
+        ai_bad = aiantagonist.Antagonist(b1)
+        iterations = 0
+        while(not b1.gameOver()):
+            moves = b1.generateMoves()
+            #print(iterations)
+            if(b1.shifters_turn):
+                bestMove = ai_good.alpha_beta(b1, 5)
+                b1.makeMoves(bestMove)
+            else:
+                #bestMove = ai_bad.alpha_beta(b1, 1)
+                #b1.makeMoves(bestMove)
+                b1.makeMoves(random.choice(moves))
+            print(b1)
+            ll.append(b1)
+            iterations += 1
+        ll.append('next')
+        most.append([max(max(i) for i in b1.board), i])
+        print(c)
+        c+=1
+    [print(i) for i in most]
+    print(max([l for l, i in most]))
+    return most,ll
     
 def main():
     b1 = Board()
-    ai_good = aihelper.AIHelper(b1)
+    ai_good = aihelper.AIHelper(b1,[0,1,1,0,0,1,1,0,0])
     ai_bad = aiantagonist.Antagonist(b1)
     iterations = 0
     while(not b1.gameOver()):
         moves = b1.generateMoves()
-        print(iterations)
+        #print(iterations)
         if(b1.shifters_turn):
             bestMove = ai_good.alpha_beta(b1, 20)
             b1.makeMoves(bestMove)
@@ -292,8 +330,10 @@ def main():
             #bestMove = ai_bad.alpha_beta(b1, 1)
             #b1.makeMoves(bestMove)
             b1.makeMoves(random.choice(moves))
-        print(b1)
+        #print(b1)
         iterations += 1
+    print(b1)
 
 if __name__=="__main__":
     main()
+    #tester()
