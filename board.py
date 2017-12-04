@@ -166,9 +166,10 @@ class Board():
             move = "kill"
         else:
             move = self.humanPlay(input("Unrecognized key, try again: "))
+            
         if(move not in self.generateMoves_ShiftTiles() and move != "kill"):
             print("cannot shift %s: it will do nothing to current board" % move)
-            move = self.humanPlay(input("Unrecognized key, try again: "))
+            move = self.humanPlay(input("Input new key: "))
         return move
     
     def makeMoves(self, move = None):
