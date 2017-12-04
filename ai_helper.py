@@ -58,7 +58,7 @@ class AIHelper:
 
     def evaluation_v2(self, b):
         total = h1.heuristic1(b,self.a)
-		return total
+        return total
 		
     def evaluation(self, b):
         board = b.board
