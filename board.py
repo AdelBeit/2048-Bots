@@ -1,258 +1,410 @@
 # -*- coding: utf-8 -*-
-#import search
-import numpy as np
-from copy import deepcopy as dc
-class Board:
-    emptyspot = 0
-    width = 4
-    height = 4
-    maxplayer = "Mover"
-    minplayer = "Placer"
+"""
+Created on Mon Nov  6 16:57:33 2017
+
+@author: RoySorce
+"""
+
+from copy import deepcopy 
+import math
+import random
+import aihelper
+import aiantagonist
+
+class Board():
+        
+    def __init__(self):
+        self.board = [[0, 0, 0, 0],
+                      [0, 0, 0, 0],
+                      [0, 0, 0, 0],
+                      [0, 0, 0, 0]]
+        self.shifts_made = list()
+        self.tiles_placed = list()
+        self.shifters_turn = False
+        self.previous_board_state = None
+        self.human = True
+        self.killSwitch = False
+        
+    def __str__(self):
+        output = ""
+        for x in range(len(self.board)):
+            for y in range(len(self.board[x])):
+                chars = len(str(self.board[x][y]))
+                if(chars == 4):
+                    output += " " + str(self.board[x][y])
+                elif(chars == 3):
+                    output += " " + str(self.board[x][y]) + " "
+                elif(chars == 2):
+                    output += "  " + str(self.board[x][y]) + "  "
+                else: 
+                    output += "   " + str(self.board[x][y]) + "  "
+            output += "\n"
+        
+        return output
     
-    def __init__(self,parent=None):
-        self.turn = self.maxplayer
-        self.board = self.clean_board()
-        self.parent = parent
-        self.won = False
-
-    def set_parent(self,parent):
-        self.parent = parent
-
-    def set_board(self,board):
-        self.board = dc(board)
-
-    # checks if given list has empty room
-    def has_empty(self,lst):
-        return emptyspot in lst
-
-    # merge and move in the given direction if possible
-    def merge_move(self,d,b=None):
-        # preprocess the lists so they can be iterated over in a single for loop
-        # reverse cols for processing if u can move in that way
-        if d == 'u':
-            # reverse the cols
-            b = self.reverse_matrix_rows(self.get_cols(b))
-            # merge
-            b = self.merge_helper(b)
-            # move
-            b = self.move(b)
-            # reverse it back
-            b = self.reverse_matrix_rows(b)
-            # get its cols
-            b = self.get_cols(b)
-        if d == 'l':
-            # reverse the rows
-            b = self.reverse_matrix_rows(self.board)
-            # merge
-            b = self.merge_helper(b)
-            # move
-            b = self.move(b)
-            # reverse it back
-            b = self.reverse_matrix_rows(b)
-        if d == 'd':
-            b = self.get_cols(b)
-            # merge 
-            b = self.merge_helper(b)
-            # move
-            b = self.move(b)
-            # get its cols
-            b = self.get_cols(b)
-        if d == 'r':
-            b = self.board
-            # merge
-            b = self.merge_helper(b)
-            # move
-            b = self.move(b)
-        # set main board
-        self.set_board(b)
-        return b
-    
-    def merge_helper(self,b):
-        r = 0
-        # go through the tiles rows and check for combos
-        while r < self.width-1:
-            m = self.can_merge(b[r])
-            if m[1]:
-                for l in m[0]:
-                    b[r][l] *= 2
-                    b[r][l-1] = self.emptyspot
-            r+=1
-        return b
-
-    # checks if a list has tiles that are mergable and returns mergable spots
-    def can_merge(self,l):
-        c = 0
-        mergables = []
-        mergable = False
-        k = len(l)
-        while c < k:
-            if l[c] == l[c+1]:
-                mergables.append(c+1)
-                mergable = True
-                c+=1
-                k-=1
-            c+=1
-        return (mergables,mergable)
-
-    # move the tiles according to direction
-    def move(self,b):
-        r = 0
-        b = self.reverse_matrix_rows(b)
-        while r < len(b):
-            vals = []
-            for i in range(len(b[r])):
-                if b[r][i] != self.emptyspot:
-                    vals.append(b[r][i])
-            vals += [self.emptyspot] * (len(b[r])-len(vals))
-            b[r] = vals
-            r += 1
-        b = self.reverse_matrix_rows(b)
-        return b
+    #randomly select 2 tiles to start the game
+    def startGame(self):
+        
+        self.previous_board_state = deepcopy(self.board)
+                    
+        tile1x = random.randint(0, 3)
+        tile1y = random.randint(0, 3)
+        val1 = random.randint(1, 10)
+        if(val1 != 10):
+            self.board[tile1x][tile1y] = 2
+            self.tiles_placed.append(((tile1x, tile1y), 2))
+        else:
+            self.board[tile1x][tile1y] = 4
+            self.tiles_placed.append(((tile1x, tile1y), 4))
+        
+        tile2x = random.randint(0, 3)
+        tile2y = random.randint(0, 3)
+        val2 = random.randint(1, 10)
+        
+        while(tile1x == tile2x and tile1y == tile2y):
+            tile2x = random.randint(0, 3)
+            tile2y = random.randint(0, 3)
             
-    def reverse_matrix_rows(self,b):
-        b = dc(b)
-        for i in range(len(b)):
-            b[i] = b[i][::-1]
-        return b
-    
-    def get_cols(self,b):
-        if b == None:
-            b = self.board
-        # get arr rep of board
-        barr = np.array(b)
-        barr = barr.transpose()
-        cols = barr.tolist()
-        return cols
-    
-    def get_left_col(self,b=None):
-        return self.get_cols(b)[0]
-
-    def get_right_col(self,b=None):
-        return self.get_cols(b)[self.width-1]
-
-    def get_top_row(self,b=None):
-        if b==None:
-            b = self.board
-        return b[0]
-
-    def get_bottom_row(self,b=None):
-        if b==None:
-            b = self.board
-        return b[height-1]
+        if(val2 != 10):
+            self.board[tile2x][tile2y] = 2
+            self.tiles_placed.append(((tile2x, tile2y), 2))
+        else:
+            self.board[tile2x][tile2y] = 4
+            self.tiles_placed.append(((tile2x, tile2y), 4))
         
-    def generate_moves(self):
-        moves = []
-        top = self.get_top_row()
-        bot = self.get_bottom_row()
-        left = self.get_left_col()
-        right = self.get_right_col()
-        # clockwise t-l
-        options = [top,right,bottom,left]
-        counter = 0
-        while counter < 4:
-            for l in options[counter]:
-                if self.emptyspot in l:
-                    moves.append(counter)
-            counter += 1
+        self.shifters_turn = True
         
-        moves = []
-        for col in range(self.width):
-            if self.board[0][col] == self.emptyspot:
-                moves.append(col)
+    def availableSpaces(self):
+        openSpaces = list()
+        for x in range(len(self.board)):
+            for y in range(len(self.board[x])):
+                if(self.board[x][y] == 0):
+                    openSpaces.append((x,y))
+        return openSpaces
+        
+    def generateMoves(self):
+        if(self.shifters_turn):
+            return self.generateMoves_ShiftTiles()
+        else:
+            return self.generateMoves_PlaceTiles()
+        
+    def generateMoves_ShiftTiles(self):
+        moves = list()
+        terminate = False
+        #right shift available
+        for x in range(len(self.board)):
+            if(terminate):
+                break
+            for y in range(len(self.board[x]) - 1): 
+                if(self.board[x][y] != 0):
+                    if(self.board[x][y+1] == 0 or self.board[x][y+1] == self.board[x][y]):
+                        moves.append("right")
+                        terminate = True
+                        break
+        #left shift available
+        terminate = False
+        for x in range(len(self.board)):
+            if(terminate):
+                break
+            for y in range(len(self.board[x]) - 1, 0, -1):
+                if(self.board[x][y] != 0):
+                    if(self.board[x][y-1] == 0 or self.board[x][y-1] == self.board[x][y]):
+                        moves.append("left")
+                        terminate = True
+                        break
+        #down shift available
+        terminate = False
+        for x in range(len(self.board) - 1):
+            if(terminate):
+                break
+            for y in range(len(self.board[x])):
+                if(self.board[x][y] != 0):
+                    if(self.board[x+1][y] == 0 or self.board[x+1][y] == self.board[x][y]):
+                        moves.append("down")
+                        terminate = True
+                        break
+        #up shift available
+        terminate = False
+        for x in range(len(self.board) - 1, 0, -1):
+            if(terminate):
+                break
+            for y in range(len(self.board[x])):
+                if(self.board[x][y] != 0):
+                    if(self.board[x-1][y] == 0 or self.board[x-1][y] == self.board[x][y]):
+                        moves.append("up")
+                        terminate = True
+                        break
         return moves
-
-    # returns a new board with the move
-    def make_move(self,c):
-        if self.board[0][c] == self.emptyspot:
-            p = dc(self.board)
-            b = dc(self)
-            for row in range(self.height-1, -1, -1):
-                if self.board[row][c] == self.emptyspot:
-                    self.board[row][c] = self.turn
-                    parent = Board(p)
-                    parent.set_board(p)
-                    parent.set_parent(self.parent)
-                    self.set_parent(parent)
-                    self.switch_turns()
-                    return self
-        return None
         
-    def unmake_last_move(self):
-        if self.parent != None:
-            p = self.parent
-            self.set_board(p.board)
-            self.set_parent(p.parent)
-            self.switch_turns()
+    def generateMoves_PlaceTiles(self):
+        moves = list()
+        for x in self.availableSpaces():
+            moves.append((x, 2))
+            moves.append((x, 4))
+        return moves
+            
+    def previewMove(self, move):
+        copy_of_self = deepcopy(self)
+        
+        if(copy_of_self.shifters_turn): #shift tiles
+            copy_of_self.makeMoves_ShiftTiles(move)
+        else: #place tiles
+            copy_of_self.makeMoves_PlaceTiles(move)
+        copy_of_self.shifters_turn = not(copy_of_self.shifters_turn)
+        return copy_of_self
+    
+    def humanPlay(self, code):
+        if(code == "w"):
+            move = "up"
+        elif(code == "s"):
+            move = "down"
+        elif(code == "a"):
+            move = "left"
+        elif(code == "d"):
+            move = "right"
+        elif(code == "p"):
+            move = "kill"
+        else:
+            move = self.humanPlay(input("Unrecognized key, try again: "))
+        if(move not in self.generateMoves_ShiftTiles() and move != "kill"):
+            print("cannot shift %s: it will do nothing to current board" % move)
+            move = self.humanPlay(input("Unrecognized key, try again: "))
+        return move
+    
+    def makeMoves(self, move = None):
+        if(self.shifters_turn): #shift tiles
+            if(self.human):
+                keyCode = input("Your turn: ")
+                move = self.humanPlay(keyCode)
+                #print("you moved %s" % move)
+            self.makeMoves_ShiftTiles(move)
+        else: #place tiles
+            self.makeMoves_PlaceTiles(move)
+        self.shifters_turn = not(self.shifters_turn)
+    
+    def makeMoves_ShiftTiles(self, direction):
+        
+        self.previous_board_state = deepcopy(self.board)
+        if(direction == None): #random move selection
+            print("random move being made")
+            direction = random.choice(self.generateMoves_ShiftTiles())    
+        self.shifts_made.append(direction)
+        
+        if(direction == "up"):
+            self.board = self.shift_up()
+        elif(direction == "down"):
+            self.board = self.shift_down()
+        elif(direction == "left"):
+            self.board = self.shift_left()
+        elif(direction == "right"):
+            self.board = self.shift_right() 
+        elif(direction == "kill"):
+            self.killSwitch = True
+        else: # this should never be reached
+            print("error, wrong argument: %s" % direction)
+    
+    def shift_up(self):
+        #print("SHIFTING UP")
+        board = deepcopy(self.board)
+        zero_spaces = list()
+        #shift and merge up
+        for x in range(4):
+            for y in range(4):
+                if(board[y][x] == 0):
+                    zero_spaces.append(y)
+                elif(zero_spaces):
+                    top_most_open = zero_spaces.pop(0)
+                    board[top_most_open][x] = board[y][x]
+                    board[y][x] = 0
+                    zero_spaces.append(y)
+                    if(top_most_open > 0):
+                        if(board[top_most_open][x] == board[top_most_open - 1][x]):
+                            #print("merging at column %d" % x)
+                            board[top_most_open - 1][x] = board[top_most_open - 1][x]*2
+                            board[top_most_open][x] = 0
+                            zero_spaces.insert(0, top_most_open)
+                elif(y > 0 and board[y-1][x] == board[y][x]):
+                    #print("merging at column %d" % x)
+                    board[y-1][x] = board[y-1][x]*2
+                    board[y][x] = 0
+                    zero_spaces.insert(0, y)
+            zero_spaces.clear()
+        return board
+    
+    def shift_down(self):
+        #print("SHIFTING DOWN")
+        board = deepcopy(self.board)
+        zero_spaces = list()
+        #shift and merge down
+        for x in range(4):
+            for y in range(3, -1, -1):
+                if(board[y][x] == 0):
+                    zero_spaces.append(y)
+                elif(zero_spaces):
+                    bottom_most_open = zero_spaces.pop(0)
+                    board[bottom_most_open][x] = board[y][x]
+                    board[y][x] = 0
+                    zero_spaces.append(y)
+                    if(bottom_most_open < 3):
+                        if(board[bottom_most_open][x] == board[bottom_most_open + 1][x]):
+                            #print("merging at column %d" % x)
+                            board[bottom_most_open + 1][x] = board[bottom_most_open + 1][x]*2
+                            board[bottom_most_open][x] = 0
+                            zero_spaces.insert(0, bottom_most_open)
+                elif(y < 3 and board[y + 1][x] == board[y][x]):
+                    #print("merging at column %d" % x)
+                    board[y + 1][x] = board[y + 1][x]*2
+                    board[y][x] = 0
+                    zero_spaces.insert(0, y)
+            zero_spaces.clear()
+        return board
+    
+    def shift_left(self):
+        #print("SHIFTING LEFT")
+        board = deepcopy(self.board)
+        zero_spaces = list()
+        #shift and merge left
+        for x in range(4):
+            for y in range(4):
+                if(board[x][y] == 0):
+                    zero_spaces.append(y)
+                elif(zero_spaces):
+                    left_most_open = zero_spaces.pop(0)
+                    board[x][left_most_open] = board[x][y]
+                    board[x][y] = 0
+                    zero_spaces.append(y)
+                    if(left_most_open > 0):
+                        if(board[x][left_most_open - 1] == board[x][left_most_open]):
+                            #print("merging at row %d" % x)
+                            board[x][left_most_open - 1] = board[x][left_most_open - 1]*2
+                            board[x][left_most_open] = 0
+                            zero_spaces.insert(0, left_most_open)
+                elif(y > 0 and board[x][y - 1] == board[x][y]):
+                    #print("merging at row %d" % x)
+                    board[x][y - 1] = board[x][y - 1]*2
+                    board[x][y] = 0
+                    zero_spaces.insert(0, y)
+            zero_spaces.clear()
+        return board
+    
+    def shift_right(self):
+        #print("SHIFT RIGHT")
+        board = deepcopy(self.board)
+        zero_spaces = list()
+        #shift and merge right
+        for x in range(4):
+            for y in range(3, -1, -1):
+                if(board[x][y] == 0):
+                    zero_spaces.append(y)
+                elif(zero_spaces):
+                    right_most_open = zero_spaces.pop(0)
+                    board[x][right_most_open] = board[x][y]
+                    board[x][y] = 0
+                    zero_spaces.append(y)
+                    if(right_most_open < 3):
+                        if(board[x][right_most_open + 1] == board[x][right_most_open]):
+                            #print("merging at row %d" % x)
+                            board[x][right_most_open + 1] = board[x][right_most_open + 1]*2
+                            board[x][right_most_open] = 0
+                            zero_spaces.insert(0, right_most_open)
+                elif(y < 3 and board[x][y + 1] == board[x][y]):
+                    #print("merging at row %d" % x)
+                    board[x][y + 1] = board[x][y + 1]*2
+                    board[x][y] = 0
+                    zero_spaces.insert(0, y)
+            zero_spaces.clear()
+        return board
+    
+    def makeMoves_PlaceTiles(self, move):
+        
+        self.previous_board_state = deepcopy(self.board)
+        
+        if(move != None):
+            self.tiles_placed.append(move)
+            self.board[move[0][0]][move[0][1]] = move[1]
+        else:
+            tile = random.choice(self.availableSpaces())
+            value = random.randint(1, 10)
+            if(value != 10):
+                self.board[tile[0]][tile[1]] = 2
+                self.tiles_placed.append(((tile[0], tile[1]), 2))
+            else:
+                self.board[tile[0]][tile[1]] = 4
+                self.tiles_placed.append(((tile[0], tile[1]), 4))
                 
-    def last_move_won(self):
-        # get arr rep of board
-        barr = np.array(self.board)
-        barr = barr.transpose()
-        # make a list of lists that contains diag, hor, and ver rows
-        backslashdiag = []
-        forwardslashdiag = []
-        vertical = barr.tolist()
-        horizontal = self.board
-        flipboard = np.flipud(self.board)
-        rows = [vertical,horizontal,backslashdiag,forwardslashdiag]
-        p = self.opposite_player()
+    def adjacent(self, tuple1, tuple2):
+        if(-1 < tuple1[0] < 4 
+           and -1 < tuple2[0] < 4
+           and -1 < tuple1[1] < 4
+           and -1 < tuple2[1] < 4): #check bounds first
+            if((abs(tuple2[0] - tuple1[0]) + abs(tuple2[1] - tuple1[1]) <= 1)):
+                return True
+        return False
+            
         
-        for i in range(-(self.height-1), self.width):
-            # \ back slash
-            backslashdiag.append(np.diag(self.board,k=i).tolist())
-            # / forward slash
-            forwardslashdiag.append(np.diag(flipboard,k=i).tolist())
-        
-        # check boards for winning cond
-        for board in rows:
-            if self.same4(board,p):
-                self.won = True
-                self.game_over()
-                return self.won
-        
+    def gameOver(self):
+        if(self.killSwitch):
+            print("game was killed")
+            return True
+        elif(self.aiWon()):
+            print("AI BOT WINS")
+            return True
+        elif(self.opponentWon()):
+            return True
+        else:
+            return False
+    
+    #checks if there are no available shifts to make
+    def opponentWon(self):
+            return not self.generateMoves_ShiftTiles()
+    
+    def aiWon(self):
+        for x in range(4):
+            for y in range(4):
+                if(self.board[x][y] == 2048):
+                    return True   
         return False
     
-    # prs board and ends game
-    def game_over(self):
-        p = self.opposite_player()
-
-    def __str__(self):
-        return str(np.matrix(self.board))
-
-    # returns an empty board template
-    def clean_board(self):
-        b = []
-        for row in range(self.height):
-            b.append([])
-            for col in range(self.width):
-                b[row].append(self.emptyspot)
-        return b
-
-    # switch player turns
-    def switch_turns(self):
-        self.turn = self.opposite_player(self.turn)
-
-    # returns the opposite player
-    def opposite_player(self,p=None):
-        p = self.turn if p == None else p
-        return self.minplayer if p == self.maxplayer else self.maxplayer
-
-def p(s):
-    print(str(np.matrix(s)))
-
-def t(k,d):
-    i = Board()
-    i.set_board(k)
-    print('i')
-    p(i.board)
-    i.merge_move(d)
-    print('after',d)
-    p(i.board)
-    print()
-
-td = [[2,0,8,0],[2,2,4,2],[0,2,2,0],[0,8,2,2]]
-lr = [[2,2,0,0],[0,2,2,0],[8,0,2,2],[0,2,8,2]]
-t(td,'u')
-t(lr,'r')
-t(td,'d')
-t(lr,'l')
+    def maxValue(self):
+        maxValue = 0
+        for x in range(4):
+            for y in range(4):
+                if(self.board[x][y] > maxValue):
+                    maxValue = self.board[x][y]
+        return maxValue
+    
+def main():
+    max_values = list()
+    for x in range(1):
+        b1 = Board()
+        b1.startGame()
+        if(b1.human):
+            print("w: up, a: left, s: down, d: right\ninput one then hit enter")
+        ai_good = aihelper.AIHelper(b1)
+        ai_bad = aiantagonist.Antagonist(b1)
+        print(b1)
+        iterations = 1
+        while(not b1.gameOver()):
+            print(iterations)
+            if(b1.shifters_turn):
+                if(b1.human):
+                    b1.makeMoves(None)
+                else:
+                    bestMove = ai_good.getMoves()
+                    b1.makeMoves(bestMove)
+            else:
+                bestMove = ai_bad.getMoves()
+                b1.makeMoves(bestMove)
+            print(b1)
+            iterations += 1
+        max_values.append(b1.maxValue())
+    print(max_values)
+    #              0  1  2  3   4   5   6   7    8    9    10    11
+    #              1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048
+    occurrences = [0, 0, 0, 0,  0,  0,  0,  0,   0,   0,   0,    0]
+    for x in max_values:
+        occurrences[int(math.log(x, 2))] += 1
+    print(occurrences)
+    
+if __name__== "__main__":
+    main()
